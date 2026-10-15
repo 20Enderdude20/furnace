@@ -1726,12 +1726,6 @@ void DivEngine::processRow(int i, bool afterDelay) {
       chan[i].scheduledSlideReset=false;
       chan[i].inPorta=false;
     }
-
-
-  
-
-
-
     // cap the volume if it is too high and not key on
     if (!chan[i].keyOn && chan[i].volume>chan[i].volMax) {
       chan[i].volume=chan[i].volMax;
@@ -1790,7 +1784,7 @@ void DivEngine::processRow(int i, bool afterDelay) {
           chan[i].portaNote=0;
           chan[i].portaSpeed=-1;
           chan[i].inPorta=false;
-          chan[i].hintPortaReeval=2;
+          chan[i].hintPortaReeval=2; // will decrement by the next tick to issue another DIV_CMD_HINT_PORTA for CS exporting
           // COMPAT FLAG: arpeggio inhibits non-porta slides
           if (!song.compatFlags.arpNonPorta) dispatchCmd(DivCommand(DIV_CMD_PRE_PORTA,i,false,0));
           break;
@@ -2314,11 +2308,12 @@ bool DivEngine::nextTick(bool noAccum, bool inhibitLowLat) {
             keyHit[i]=true;
           }
         }
-
+        
+      // for single ticks up and down
           if(chan[i].hintPortaReeval) {
             if(chan[i].hintPortaReeval==1) {
-            dispatchCmd(DivCommand(DIV_CMD_HINT_PORTA,i,chan[i].portaNote,MAX(chan[i].portaSpeed,0)));
-            chan[i].hintPortaReeval=0;
+              dispatchCmd(DivCommand(DIV_CMD_HINT_PORTA,i,chan[i].portaNote,MAX(chan[i].portaSpeed,0)));
+              chan[i].hintPortaReeval=0;
             }
             else
               chan[i].hintPortaReeval=1;
