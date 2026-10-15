@@ -1726,6 +1726,12 @@ void DivEngine::processRow(int i, bool afterDelay) {
       chan[i].scheduledSlideReset=false;
       chan[i].inPorta=false;
     }
+
+
+  
+
+
+
     // cap the volume if it is too high and not key on
     if (!chan[i].keyOn && chan[i].volume>chan[i].volMax) {
       chan[i].volume=chan[i].volMax;
@@ -1779,10 +1785,12 @@ void DivEngine::processRow(int i, bool afterDelay) {
           // COMPAT FLAG: arpeggio inhibits non-porta slides
           if (!song.compatFlags.arpNonPorta) dispatchCmd(DivCommand(DIV_CMD_PRE_PORTA,i,true,0));
           int portaSpeedMultiplier=(song.compatFlags.linearPitch && !(chan[i].note&DIV_NOTE_RAW_FLAG))?song.compatFlags.pitchSlideSpeed:1;
+          dispatchCmd(DivCommand(DIV_CMD_HINT_PORTA,i,chan[i].portaNote, MAX(chan[i].portaSpeed, 0)));
           dispatchCmd(DivCommand(DIV_CMD_NOTE_PORTA,i,chan[i].portaSpeed*portaSpeedMultiplier,chan[i].portaNote));
           chan[i].portaNote=0;
           chan[i].portaSpeed=-1;
           chan[i].inPorta=false;
+          chan[i].hintPortaReeval=2;
           // COMPAT FLAG: arpeggio inhibits non-porta slides
           if (!song.compatFlags.arpNonPorta) dispatchCmd(DivCommand(DIV_CMD_PRE_PORTA,i,false,0));
           break;
@@ -2306,6 +2314,15 @@ bool DivEngine::nextTick(bool noAccum, bool inhibitLowLat) {
             keyHit[i]=true;
           }
         }
+
+          if(chan[i].hintPortaReeval) {
+            if(chan[i].hintPortaReeval==1) {
+            dispatchCmd(DivCommand(DIV_CMD_HINT_PORTA,i,chan[i].portaNote,MAX(chan[i].portaSpeed,0)));
+            chan[i].hintPortaReeval=0;
+            }
+            else
+              chan[i].hintPortaReeval=1;
+          }
 
         // volume slides and tremolo
         // COMPAT FLAG: don't slide on the first tick of a row
@@ -3229,6 +3246,7 @@ void DivEngine::nextBuf(float** in, float** out, int inChans, int outChans, unsi
       if (cycles<=0) {
         // we have to tick
         if (nextTick()) {
+          
           /*totalTicks=0;
           totalSeconds=0;*/
           // used by audio export to determine how many samples to write (otherwise it'll add silence at the end)

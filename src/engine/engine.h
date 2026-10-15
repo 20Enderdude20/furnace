@@ -330,6 +330,7 @@ struct DivChannelState {
   // goneThroughNote: same as wentThroughNote, but doesn't reset on loop.
   // - these two are used to determine loop trail length.
   bool wentThroughNote, goneThroughNote;
+  unsigned char hintPortaReeval;
 
   // MIDI state variables.
   int midiNote, curMidiNote, midiPitch;
@@ -399,6 +400,7 @@ struct DivChannelState {
     sampleOffSet(false),
     wentThroughNote(false),
     goneThroughNote(false),
+    hintPortaReeval(0),
     midiNote(-1),
     curMidiNote(-1),
     midiPitch(-1),
